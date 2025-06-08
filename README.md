@@ -23,7 +23,7 @@ The implementation uses mock email providers to simulate real-world email sendin
 ### Setup
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/raulskat/resilient-mail-service
 cd resilient-mail-service
 ```
 
@@ -36,6 +36,17 @@ npm install
 ```bash
 npm run build
 ```
+# Cloud Deployment Summary
+
+The Resilient Email Service has been successfully deployed on a cloud server and is accessible at:
+``` bash
+http://16.171.135.54/
+```
+
+The service runs continuously using PM2 to ensure fault tolerance and automatic restarts. It listens on port XYZ and is configured with key resilience features such as retry with exponential backoff, circuit breaker, rate limiting, and idempotency to guarantee reliable email delivery even under failure conditions.
+
+The server's firewall and security settings are configured to allow traffic on port XYZ, enabling seamless API access for sending emails and checking status. This deployment ensures the service is production-ready with high availability and robustness.
+
 
 ## Usage
 
@@ -56,6 +67,16 @@ curl -X POST http://localhost:3000/send-email \
 Check email status:
 ```bash
 curl http://localhost:3000/status/123
+```
+
+### Fail over 2nd provider
+```bash
+curl -X POST http://localhost:3000/send-email \
+  -H "Content-Type: application/json" \
+  -d '{"id":"failover-001", "to":"test@example.com", "subject":"Failover Test", "body":"Trying to trigger ProviderB"}'
+
+
+curl http://localhost:3000/status/failover-001
 ```
 
 ### Code Example
