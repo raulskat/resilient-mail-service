@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Service WebSocket Test Client</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status-updates {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .status-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #4CAF50;
+            background-color: #f1f1f1;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Email Service Test Client</h1>
+    <p>This client demonstrates sending emails and receiving real-time updates via WebSocket.</p>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Send Email</h2>
+            <form id="email-form">
+                <label for="email-id">Email ID:</label>
+                <input type="text" id="email-id" value="test-123" required>
+                
+                <label for="email-to">To:</label>
+                <input type="email" id="email-to" value="user@example.com" required>
+                
+                <label for="email-subject">Subject:</label>
+                <input type="text" id="email-subject" value="Test Email" required>
+                
+                <label for="email-body">Body:</label>
+                <textarea id="email-body" rows="5" required>This is a test email sent from the WebSocket test client.</textarea>
+                
+                <button type="submit">Send Email</button>
+            </form>
+            
+            <div id="api-response" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>Real-time Status Updates</h2>
+            <div>
+                <label for="subscribe-id">Subscribe to Email ID:</label>
+                <input type="text" id="subscribe-id">
+                <button id="subscribe-btn">Subscribe</button>
+            </div>
+            
+            <div id="connection-status" style="margin: 10px 0;">
+                WebSocket: <span>Disconnected</span>
+            </div>
+            
+            <div id="status-updates"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Connect to WebSocket server
+        const socket = io('http://localhost:3000');
+        const connectionStatus = document.querySelector('#connection-status span');
+        const statusUpdates = document.getElementById('status-updates');
+        const emailForm = document.getElementById('email-form');
+        const apiResponse = document.getElementById('api-response');
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        
+        // WebSocket connection events
+        socket.on('connect', () => {
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.style.color = 'green';
+            addStatusUpdate('WebSocket connected');
+        });
+        
+        socket.on('disconnect', () => {
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.style.color = 'red';
+            addStatusUpdate('WebSocket disconnected');
+        });
+        
+        // Listen for status updates
+        socket.on('status_update', (data) => {
+            addStatusUpdate(`Email ${data.id}: Status changed to "${data.status}"`);
+        });
+        
+        // Subscribe to email ID updates
+        subscribeBtn.addEventListener('click', () => {
+            const emailId = document.getElementById('subscribe-id').value.trim();
+            if (emailId) {
+                socket.emit('subscribe', emailId);
+                addStatusUpdate(`Subscribed to updates for email ID: ${emailId}`);
+            } else {
+                alert('Please enter an email ID to subscribe to');
+            }
+        });
+        
+        // Send email form submission
+        emailForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('email-id').value;
+            const to = document.getElementById('email-to').value;
+            const subject = document.getElementById('email-subject').value;
+            const body = document.getElementById('email-body').value;
+            
+            try {
+                const response = await fetch('http://localhost:3000/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id, to, subject, body })
+                });
+                
+                const data = await response.json();
+                
+                apiResponse.innerHTML = `
+                    <h3>API Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                // Auto-subscribe to the email ID
+                document.getElementById('subscribe-id').value = id;
+                socket.emit('subscribe', id);
+                addStatusUpdate(`Automatically subscribed to updates for email ID: ${id}`);
+                
+            } catch (error) {
+                apiResponse.innerHTML = `
+                    <h3>Error:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+        
+        // Helper function to add status updates to the UI
+        function addStatusUpdate(message) {
+            const item = document.createElement('div');
+            item.className = 'status-item';
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            
+            const content = document.createElement('div');
+            content.textContent = message;
+            
+            item.appendChild(timestamp);
+            item.appendChild(content);
+            
+            statusUpdates.appendChild(item);
+            statusUpdates.scrollTop = statusUpdates.scrollHeight;
+        }
+    </script>
+</body>
+</html>
+

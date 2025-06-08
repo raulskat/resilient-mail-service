@@ -1,0 +1,61 @@
+# === Node Modules ===
+node_modules/
+.npm/
+
+# === Logs ===
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Environment Variables ===
+.env
+.env.*  # if you use .env.dev, .env.prod etc.
+
+# === OS / System Files ===
+.DS_Store
+Thumbs.db
+
+# === TypeScript Build Output ===
+dist/
+build/
+*.tsbuildinfo
+
+# === Coverage / Testing ===
+coverage/
+.nyc_output/
+jest-cache/
+jest-coverage/
+
+# === Docker ===
+docker-compose.override.yml
+*.local.yml
+
+# === PM2 Process Files ===
+.pids/
+*.pid
+*.seed
+
+# === VSCode / JetBrains IDEs ===
+.vscode/
+.idea/
+*.sw?
+*.iml
+
+# === Misc ===
+*.tgz
+.cache/
+*.log.*
+
+# === Optional ===
+# ignore Prisma generated files if using
+prisma/migrations/
+
+# === Git Secrets / Security ===
+*.pem
+*.key
+*.crt
+*.srl
+*.csr
+*.pub
